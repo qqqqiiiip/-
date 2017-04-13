@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav ">
+			<h1 class="mui-title">主界面</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-scroll">
+
+			</div>
+		</div>
+		<nav class="mui-bar mui-bar-tab" id="nav-bar">
+			<a class="mui-tab-item mui-active" id="main" href="0">
+				<span class="mui-icon mui-icon-home"></span>
+				<span class="mui-tab-label">主界面</span>
+			</a>
+			<a class="mui-tab-item" id="equipments" href="1">
+				<span class="mui-icon mui-icon-list"></span>
+				<span class="mui-tab-label">设备</span>
+			</a>
+			<a class="mui-tab-item" id="more" href="2">
+				<span class="mui-icon mui-icon-videocam"></span>
+				<span class="mui-tab-label">摄像头</span>
+			</a>
+			<a class="mui-tab-item" id="setting" href="3">
+				<span class="mui-icon mui-icon-gear"></span>
+				<span class="mui-tab-label">设置</span>
+			</a>
+		</nav>
+		<script src="js/mui.min.js"></script>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<script src="js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			var subpages = ['main.html', 'equipments.html', 'more.html', 'setting.html'];
+			var subpageStyle = {
+				top: '45px',
+				bottom: '51px',
+			}
+			mui.plusReady(function() {
+				var showPage = 0;
+				var self = plus.webview.currentWebview();
+				for(var i = 0; i < subpages.length; i++) {
+					var sub = plus.webview.create(subpages[i], subpages[i], subpageStyle);
+					sub.hide();
+					self.append(sub);
+					plus.webview.show(subpages[0]);
+					showPage = 0;
+				}
+				mui(".mui-bar-tab").on("tap", "a", function(e) { //通过.mui-bar-tap里的a元素绑定tap事件，达到批量绑定的效果
+					var tagPage = this.getAttribute("href"); //getAttribute()获取属性函数
+					//	    		mui(".mui-title")[0].innerText = this.lastElementChild.innerText;
+					changePage(tagPage);
+				});
+				var changePage = function(index) {
+					if(index != showPage) {
+						var tags = $("#nav-bar").children("a");
+						$(".mui-title")[0].innerText = $(tags[index]).children('span')[1].innerText;
+						$(tags[showPage]).removeClass("mui-active");
+						$(tags[index]).addClass("mui-active");
+						if(showPage > index) {
+							plus.webview.hide(subpages[showPage], "slide-out-right", 400);
+						} else {
+							plus.webview.hide(subpages[showPage], "slide-out-left", 400);
+						}
+
+						plus.webview.show(subpages[index], "fade-in", 400); //fade-in淡入，100毫秒 
+						showPage = index;
+					} else {
+						//	console.log(JSON.stringify(plus.webview.getWebviewById('main.html')));
+						var contentWebview = plus.webview.getWebviewById(subpages[index]);
+						contentWebview.reload(true);
+						//contentWebview.evalJS("mui('#refreshContainer').pullRefresh().pulldownLoading();");
+					}
+				}
+				window.addEventListener('changePage', function(href) {
+					href = href.detail.href;
+					changePage(href);
+				}, false);
+			});
+		</script>
+	</body>
+
+</html>

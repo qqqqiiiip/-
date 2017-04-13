@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<link href="css/bootstrap.min.css" rel="stylesheet" />
+		<link rel="stylesheet" href="css/IOT.css" />
+	</head>
+
+	<body>
+		<!--下拉刷新容器-->
+		<div id="refreshContainer" class="mui-content mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<!--数据列表-->
+				<ul class="mui-table-view mui-table-view-chevron">
+					<li style="background-color: #F3F3F3;">
+						<ul class="mui-table-view">
+							<li class="mui-table-view-cell" id="door">
+								<span>门禁</span>
+								<div class="mui-switch mui-switch-blue">
+									<div class="mui-switch-handle"></div>
+								</div>
+							</li>
+							<li class="mui-table-view-cell" id="fan">
+								<span>风扇</span>
+								<div class="mui-switch mui-switch-blue">
+									<div class="mui-switch-handle"></div>
+								</div>
+							</li>
+							<li class="mui-table-view-cell" id="light_0">
+								<span>灯光1</span>
+								<div class="mui-switch mui-switch-blue">
+									<div class="mui-switch-handle"></div>
+								</div>
+							</li>
+							<li class="mui-table-view-cell" id="light_1">
+								<span>灯光2</span>
+								<div class="mui-switch mui-switch-blue">
+									<div class="mui-switch-handle"></div>
+								</div>
+							</li>
+							<li class="mui-table-view-cell" id="light_2">
+								<span>灯光3</span>
+								<div class="mui-switch mui-switch-blue ">
+									<div class="mui-switch-handle"></div>
+								</div>
+							</li>
+							<li class="mui-table-view-cell" id="light_3">
+								<span>灯光4</span>
+								<div class="mui-switch mui-switch-blue ">
+									<div class="mui-switch-handle"></div>
+								</div>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/jquery-3.1.1.min.js"></script>
+		<script src="js/socket.io-1.4.5.js"></script>
+		<script src="js/IOT.js"></script>
+		<script type="text/javascript">
+			mui.plusReady(function() {
+				var username = 'su';
+				var EqData = {
+					door: 0,
+					fan: 0,
+					light_0: 0,
+					light_1: 0,
+					light_2: 0,
+					light_3: 0,
+				}
+				//socket.io
+				var socket = io.connect("http://114.215.152.154:3000");
+//				var socket = io.connect("http://115.28.28.7:3000");
+				socket.on('data', function(data) {
+					console.log("接收到数据：", JSON.stringify(data));
+					EqData = data;
+					updateSwitch();
+				});
+				mui.init({
+					//swipeBack:true,  //右滑关闭
+					pullRefresh: { //下拉刷新
+						container: '#refreshContainer',
+						down: {
+							contentrefresh: '正在加载...',
+							auto: true,
+							callback: pulldownfresh,
+						}
+					}
+				});
+				mui('.mui-content .mui-switch').each(function() { //循环所有toggle
+					this.isManual = true;
+					this.addEventListener('toggle', function(event) {
+						data = {
+							name: this.parentElement.getAttribute("id"),
+							status: event.detail.isActive ? 1 : 0,
+						}
+						var that = this;
+						if(that.isManual) {
+							$.ajax({
+								
+								type: "get",
+								url: "http://115.28.28.7:3000/toggle",
+								async: true,
+								data: data,
+								//timeout: 5000,
+								dataType: 'jsonp',
+								success: function(data) {
+								},
+								error: function(e) {
+								}
+							});
+						} else {
+							that.isManual = true;
+						}
+
+					});
+				});
+
+				function pulldownfresh() {
+					var temperature = $('#temperature')[0];
+					var flag = setTimeout(function() {
+						mui.toast('更新失败，无法连接服务器(；′⌒`)');
+						mui('#refreshContainer').pullRefresh().endPulldownToRefresh();
+					}, 5000);
+
+					socket.emit('data', username, function(data) {
+						clearTimeout(flag);
+						console.log("下拉刷新接收数据:", JSON.stringify(data));
+						EqData = data;
+						updateSwitch();
+						mui('#refreshContainer').pullRefresh().endPulldownToRefresh();
+					});
+				}
+				var updateSwitch = function() {
+					mui('.mui-content .mui-switch').each(function() {
+						if(EqData[this.parentElement.getAttribute("id")] != this.classList.contains("mui-active")) {
+							this.isManual = false;
+							mui(this).switch().toggle();
+							console.log(this.parentElement.getAttribute("id"));
+						}
+					});
+				}
+				//滑动切换子页面
+				window.addEventListener('swipe', function(event) {
+					var direction = event.detail.direction;
+					var parent = plus.webview.getWebviewById('index.html');
+					switch(direction) {
+						case 'right':
+							mui.fire(parent, "changePage", { href: 0 });
+							break;
+						case 'left':
+							mui.fire(parent, "changePage", { href: 2 });
+							break;
+							defalut: break;
+					}
+				})
+			});
+		</script>
+	</body>
+
+</html>

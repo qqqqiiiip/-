@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<link href="css/bootstrap.min.css" rel="stylesheet" />
+		<link href="css/IOT.css" rel="stylesheet" />
+		<link href="css/main.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<!--下拉刷新容器-->
+		<div id="refreshContainer" class="mui-content mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<!--数据列表-->
+				<ul class="mui-table-view mui-table-view-chevron" id="container">
+					<div id="login" class="head text-center">
+						<div id="account-bar">
+							<b>用户名：</b><b id="account">ss</b>
+						</div>
+						<div id="state-bar">
+							<b>数据更新时间：</b><b id="updateTime"></b>
+						</div>
+					</div>
+					<div class="row" id="data1">
+						<div class="col-xs-6 dataTitle">空气<b class="dataContent" id="dataAir">正常</b></div>
+						<div class="col-xs-6 dataTitle">光敏<b class="dataContent" id="dataPhotosensitive">正常</b></div>
+						<div class="col-xs-6 dataTitle">红外<b class="dataContent" id="dataInfrared">正常</b></div>
+						<div class="col-xs-6 dataTitle">烟雾<b class="dataContent" id="dataSmoke">正常</b></div>
+					</div>
+					<ul style='position: absolute;bottom: 0;left: 0;width: 100%;padding-left: 0;'>
+						<li class="flex flexCenter dataList">
+							<span>
+				    				温度
+				    			</span>
+							<p>-20℃</p>
+							<div class="progress">
+								<div id="temperature" class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="-20" aria-valuemax="50">
+
+								</div>
+							</div>
+							<p>50℃</p>
+						</li>
+						<li class="flex flexCenter dataList">
+							<span>
+				    				湿度
+				  		  </span>
+							<p>0%</p>
+							<div class="progress">
+								<div id="humidity" class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+
+								</div>
+							</div>
+							<p>100%</p>
+						</li>
+					</ul>
+				</ul>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/jquery-3.1.1.min.js"></script>
+		<script src="js/socket.io-1.4.5.js"></script>
+		<script src="js/IOT.js"></script>
+		<script type="text/javascript">
+			mui.plusReady(function() {
+				var socket = io.connect("http://114.215.152.154:3000");
+//				var socket = io.connect("http://115.28.28.7:3000");
+				socket.on('data', function(data) {
+					updateTemp(data.temp);
+					updateHumidity(data.humidity);
+					updateData1(data);
+				});
+				mui.init({
+					//swipeBack:true, 
+					pullRefresh: {
+						container: '#refreshContainer',
+						down: {
+							contentrefresh: '正在加载...',
+							auto: true,
+							callback: pulldownfresh,
+						}
+					}
+				});
+
+				function pulldownfresh() {
+					var temperature = $('#temperature')[0];
+					var flag = setTimeout(function() {
+						mui.toast('无法连接服务器(；′⌒`)');
+						mui('#refreshContainer').pullRefresh().endPulldownToRefresh();
+					}, 5000);	
+					socket.emit('data', 'su', function(data) {
+						clearTimeout(flag);
+						console.log("下拉刷新接收数据:", JSON.stringify(data));
+						getTemprature(data.temp);
+						getHumidity(data.humidity);
+						updateData1(data);
+						mui.toast("数据更新成功(*^__^*) ");
+					});
+				}
+
+				function updateData1(data) {
+					air = $("#dataAir")[0];
+					photosensitive = $("#dataPhotosensitive")[0];
+					smoke = $("#dataSmoke")[0];
+					infrared = $("#dataInfrared")[0];
+					time = $("#updateTime")[0];
+					air.innerText = data.air==0?"正常":"异常";
+					smoke.innerText = data.smoke==0?"正常":"异常";
+					infrared.innerText = data.infrared==0?"正常":"异常";
+					photosensitive.innerText = data.photosensitive==0?"正常":"异常";
+					time.innerText = data.date.toString().substr(0,19);
+				}
+				window.addEventListener('swipe', function(event) {
+					var direction = event.detail.direction;
+					var parent = plus.webview.getWebviewById('index.html');
+					switch(direction) {
+						case 'left':
+							mui.fire(parent, "changePage", { href: 1 });
+							break;
+							defalut: break;
+					}
+				})
+			});
+		</script>
+	</body>
+
+</html>
