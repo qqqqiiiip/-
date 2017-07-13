@@ -11,7 +11,7 @@ var express = require('express')
   , con = require('./db.js');
 
 var app = express();
-app.set('port', process.env.PORT || 80);
+app.set('port', process.env.PORT || 8088);
 app.use(bodyParser.urlencoded({ extended : false}));
 
 app.set('views', __dirname + '/views');
@@ -84,6 +84,7 @@ app.post('/delete', (req, res) => {
     }
   });
 });
+
 app.post('/search', (req, res) => {
 
   let i = req.body.type;
@@ -112,6 +113,7 @@ app.post('/search', (req, res) => {
     }
   });
 });
+
 app.post('/save', (req, res) => {
   let inf = req.body;
   for (var i = 0; i < inf.length; i++) {
@@ -131,6 +133,7 @@ app.post('/save', (req, res) => {
   });
   
 });
+
 app.post('/add_new', (req, res) => {
   let name = req.body.name;
   let superior_id = req.body.superior_id;
@@ -144,6 +147,7 @@ app.post('/add_new', (req, res) => {
     }
   });
 });
+
 app.post('/add', (req, res) => {
   let id = req.body.id;
   let name = req.body.name;
